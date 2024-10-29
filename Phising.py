@@ -18,7 +18,7 @@ if not os.path.exists("static/result/image"):
     os.makedirs("static/result/image")
 
 ascii_art1 = f"""
-{B}⠀⠀⠀⠀⠀⢀⣴⣾⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+{B}⠀⠀⠀⠀⠀       ⢀⣴⣾⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 {C}⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⠾⠛⠉⠀⠙⠛⠿⣿⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 {Y}⠀⠀⠀⠀⠀⠀⠀⢠⣾⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣦⠀⠀⠀⠀⠀⠀⠀⠀
 {G}⠀⠀⠀⠀⠀⠀⠀⢸⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢿⣧⠀⠀⠀⠀⠀⠀⠀
@@ -39,7 +39,7 @@ ascii_art1 = f"""
 """
 
 ascii_art2 = f"""
-{R}                ███████{Y}░░{R}███████
+{R}          ███████{Y}░░░░{R}███████
        ██{Y}░░░░░██{R}░░██{Y}░░░░░██
        ██{Y}░░░░░██{R}░░██{Y}░░░░░██
        ██{Y}░░░░░██{R}░░██{Y}░░░░░██
@@ -53,7 +53,6 @@ ascii_art2 = f"""
 {W}
 """
 
-# Gabungkan kedua seni ASCII
 def show_aciart():
     combined_art = '\n'.join(line1 + '   ' + line2 for line1, line2 in zip(ascii_art1.splitlines(), ascii_art2.splitlines()))
     print(combined_art)
