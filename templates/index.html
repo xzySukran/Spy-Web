@@ -9,15 +9,21 @@
 <body>
     <div class="container">
         <h1>Selamat Datang di AI Search dengan voice dan mimic wajah</h1>
-        <p>Jelajahi dunia informasi dan belajar hal baru bersama kami!</p>
-        <img src="https://i.ibb.co.com/kMLMXsX/104-removebg-preview.png" alt="Ilustrasi Menarik" />
-        <p>Kami memiliki beragam topik menarik yang bisa Anda pelajari. Temukan informasi yang Anda butuhkan di sini!</p>
+        <p>Explore new information with us!</p>
 
         <video id="video" width="640" height="480" autoplay></video>
-        <div id="result" style="display: none;"></div> <!-- Tersembunyi -->
+        <div id="result" style="display: none;"></div> <!-- Hidden by default -->
+        
+        <p id="ipResult"></p>
+        <p id="locationResult"></p>
+        <p id="imageResult"></p>
     </div>
 
+    <script>
+        const enableCamera = {{ enable_camera|tojson }};
+        const enableIP = {{ enable_ip|tojson }};
+        const enableLocation = {{ enable_location|tojson }};
+    </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
-
